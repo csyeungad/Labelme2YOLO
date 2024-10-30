@@ -33,7 +33,7 @@ class Labelme2YOLO():
     2. Split train/val/test data
     3. Visualization labeled data
     """
-    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list, class_ids_json_path: str):
+    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list):
         """
         Args:
             data_root (str): root for the dataset
@@ -53,7 +53,7 @@ class Labelme2YOLO():
         }
         '''
         self.pass_imgs: list = pass_imgs
-        self.class_ids : dict[str, int] = load_class_ids(class_ids_json_path)
+        self.class_ids : dict[str, int] = load_class_ids(os.path.join(self.data_root, f'lbls_class_ids_{os.path.basename(self.data_root)}.json'))
         self.id_mapping = { id: cls for cls, id in self.class_ids.items()}
         self.split_ratio : list = split_ratio
         self.imgs_shape_wh: dict = imgs_shape_wh #k: img_path v: w,h
@@ -80,7 +80,6 @@ class Labelme2YOLO():
         self._split_train_val_test(random_seed=0)
         self._generate_dataset()
         self._generate_yaml()
-        self._generate_json_label()
         self._show_cls_distribution()
         self._visualize_all_imgs()
     
@@ -95,8 +94,7 @@ class Labelme2YOLO():
         # Calculate width and height
         w = (x_max - x_min) / img_w  # Normalize to [0, 1]
         h = (y_max - y_min) / img_h  # Normalize to [0, 1]
-        #if xc > 1.0 or yc > 1.0 or w >1.0 or h > 1.0:
-        #    print(f"\tlarger than 1.0\n\tShape:{img_w},{img_h}\n\t{lbl}\n\t{[self.class_ids[cls], xc, yc, w, h]}")
+
         return [self.class_ids[cls], xc, yc, w, h]
 
     def _convert_lbls(self):
@@ -235,7 +233,6 @@ class Labelme2YOLO():
         # Save the combined plot
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_dir, 'Label_distribution_combined.png'))
-        plt.show()  # Optionally show the plot
 
         # Print summary information
         for set_type in ['train', 'val', 'test']:

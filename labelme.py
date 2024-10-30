@@ -5,7 +5,7 @@ import numpy as np
 from utils.utils import SUPPORT_FORMAT, save_class_ids
 
 class Labelme:
-    """Load annotated datat in labelme format"""
+    """Load annotated data in labelme format. Defect distribution saves to data root"""
     def __init__(self, data_root: str) -> None:
         self.data_root = data_root
         self.imgs_shape_wh = {} #stored image w and h
@@ -14,7 +14,7 @@ class Labelme:
         self.pass_imgs = []
         self.remove_imgs = []
         self.review_imgs = []
-        self.label_distribution = dict[str, ]
+        self.label_distribution = {}
         self._load_detection_anno()
         save_class_ids(self.data_root, self.class_ids)
         self.id_mapping = { id: cls for cls, id in self.class_ids.items()}
