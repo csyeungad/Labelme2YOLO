@@ -95,9 +95,9 @@ class Labelme:
             plt.text(bar.get_x() + bar.get_width()/2, yval, yval, 
                     ha='center', va='bottom', fontsize=fontsize)
 
-        plt.ylabel('#lables', fontsize=fontsize)
-        plt.xlabel('label class', fontsize=fontsize)
-        plt.title(f"label lables distribution: ", fontsize=fontsize)
+        plt.ylabel('#labels', fontsize=fontsize)
+        plt.xlabel('Label class', fontsize=fontsize)
+        plt.title(f"Label distribution: ", fontsize=fontsize)
         plt.xticks(fontsize=6)  # Set font size for x-axis tick labels
         plt.savefig(os.path.join(self.data_root, 'Label_distribution.png'))
         
@@ -124,7 +124,7 @@ class Labelme:
 
 class LabelmeVisualizer:
     def __init__(self, save_dir: str, box_area_dist: dict, box_ratio_dist: dict):
-        self.save_dir = os.path.join(save_dir, 'LabelmeVisualization')
+        self.save_dir = os.path.join(save_dir, 'LabelmeVisualizer')
         mkdir(self.save_dir)
         self.box_area_dist = box_area_dist
         self.box_ratio_dist = box_ratio_dist

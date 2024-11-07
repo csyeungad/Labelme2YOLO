@@ -173,13 +173,13 @@ class Labelme2YOLO():
         '''
         names = {id:cls for cls, id in self.class_ids.items()}
         content = {
-            'path': f'../datasets/{self.save_dir}',
+            'path': f'../datasets/{os.path.basename(self.save_dir)}',
             'train': 'images/train',
             'val': 'images/val',
             'test': 'images/test',
             'names': names
         }
-        save_path = os.path.join(self.save_dir, f'{os.path.basename(self.save_dir)}.yaml')
+        save_path = os.path.join(self.save_dir, f'dataset.yaml')
         # Write the distribution to a YAML file
         with open(save_path, 'w') as file:
             yaml.dump(content, file)
