@@ -1,5 +1,5 @@
 {
     "labeled_data_root" : "",
-    "grouping_dest" : "",
-    "label_vis_dest" : ""
+    "output_dir" : "",
+    "split_ratio" : [0.7, 0.15,0.15]
 }

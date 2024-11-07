@@ -2,15 +2,15 @@ import os
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.utils import SUPPORT_FORMAT, save_class_ids
+from utils.utils import SUPPORT_FORMAT, save_class_ids, mkdir
 
 class Labelme:
-    """Load annotated data in labelme format. Defect distribution saves to data root"""
+    """Load annotated data in labelme format. label distribution saves to data root"""
     def __init__(self, data_root: str) -> None:
         self.data_root = data_root
         self.imgs_shape_wh = {} #stored image w and h
         self.class_ids = {}
-        self.defect_labels = {}
+        self.labeled_imgs = {}
         self.pass_imgs = []
         self.remove_imgs = []
         self.review_imgs = []
@@ -26,48 +26,48 @@ class Labelme:
         
     def _load_detection_anno(self) -> None:
         """Load object detection rectangle labels and class_ids\n
-        defect_labels = {\n
-            defect_img_path_1: [[label, xmin, ymin, xmax, ymax],...]\n
-            defect_img_path_2: [[label, xmin, ymin, xmax, ymax],...]\n
+        labeled_imgs = {\n
+            label_img_path_1: [[cls_1, xmin, ymin, xmax, ymax],...]\n
+            label_img_path_2: [[cls_2, xmin, ymin, xmax, ymax],...]\n
         }\n
 
         pass_imgs = [pass_img_path_1, pass_img_path_1 ,....]\n
         remove_imgs = [remove_img_path_1, remove_img_path_1 ,....]\n
         
         """
-        print(f"Start loading labelme data...")
         class_list = set()
-        for file in os.scandir(self.data_root):
-            if file.name.endswith(SUPPORT_FORMAT):
-                json_path = os.path.join(self.data_root, os.path.splitext(file.name)[0] + ".json")
-                if os.path.exists(json_path):
-                    lbls = []
-                    with open(json_path,'r') as f:
-                            data = json.load(f)
-                    if "REMOVE" in data['flags'] and data['flags']['REMOVE']:
-                        self.remove_imgs.append(file.path)
-                        continue
-                    if 'REVIEW' in data['flags'] and data['flags']['REVIEW']:
-                        self.review_imgs.append(file.path)
-                        continue
-                    if 'PASS' in data['flags'] and data['flags']['PASS']:
-                        self.pass_imgs.append(file.path)
-                        continue       
-                    for item in data["shapes"]:
-                        if item["shape_type"].lower() == "rectangle":
-                            xmin = int(min(item["points"][0][0], item["points"][1][0]))
-                            ymin = int(min(item["points"][0][1], item["points"][1][1]))
-                            xmax = int(max(item["points"][0][0], item["points"][1][0]))
-                            ymax = int(max(item["points"][0][1], item["points"][1][1]))
-                            lbls.append([item["label"], xmin, ymin, xmax, ymax])
-                            class_list.add(item["label"])
-                            
-                    if len(lbls) >0:
-                        self.defect_labels[file.path] = lbls
+        for cur_root, dirs, files in os.walk(self.data_root):
+            for file in files:
+                if file.endswith(SUPPORT_FORMAT):
+                    file_path = os.path.join(cur_root, file)
+                    json_path = file_path.replace(os.path.splitext(file)[1], ".json")
+                    if os.path.exists(json_path):
+                        lbls = []
+                        with open(json_path,'r') as f:
+                                data = json.load(f)
+                        if "REMOVE" in data['flags'] and data['flags']['REMOVE']:
+                            self.remove_imgs.append(file_path)
+                            continue
+                        if 'REVIEW' in data['flags'] and data['flags']['REVIEW']:
+                            self.review_imgs.append(file_path)
+                            continue
+                        if 'PASS' in data['flags'] and data['flags']['PASS']:
+                            self.pass_imgs.append(file_path)
+                            continue       
+                        for item in data["shapes"]:
+                            if item["shape_type"].lower() == "rectangle":
+                                xmin = int(min(item["points"][0][0], item["points"][1][0]))
+                                ymin = int(min(item["points"][0][1], item["points"][1][1]))
+                                xmax = int(max(item["points"][0][0], item["points"][1][0]))
+                                ymax = int(max(item["points"][0][1], item["points"][1][1]))
+                                lbls.append([item["label"], xmin, ymin, xmax, ymax])
+                                class_list.add(item["label"])
+                                
+                        if len(lbls) >0:
+                            self.labeled_imgs[file_path] = lbls
 
-                    self.imgs_shape_wh[file.path] = [data["imageWidth"],data['imageHeight']]       
+                        self.imgs_shape_wh[file_path] = [data["imageWidth"],data['imageHeight']]       
         self.class_ids = { cls: int(i) for i, cls in enumerate(sorted(class_list))}
-        print(f"Completed loading labelme data.")
 
     def _save_class_ids(self):
         with open(os.path.join(self.data_root, f'yolo_class_ids_{os.path.basename(self.data_root)}.json'), 'w') as f:
@@ -78,7 +78,7 @@ class Labelme:
         from collections import Counter
         """Get distribution of label: count of label."""
         # Use Counter to count occurrences of class labels
-        self.label_distribution = dict(Counter(lbl[0] for lbls in self.defect_labels.values() for lbl in lbls))
+        self.label_distribution = dict(Counter(lbl[0] for lbls in self.labeled_imgs.values() for lbl in lbls))
 
     def show_distribution(self):
         
@@ -96,24 +96,24 @@ class Labelme:
                     ha='center', va='bottom', fontsize=fontsize)
 
         plt.ylabel('#lables', fontsize=fontsize)
-        plt.xlabel('Defect class', fontsize=fontsize)
-        plt.title(f"Defect lables distribution: ", fontsize=fontsize)
+        plt.xlabel('label class', fontsize=fontsize)
+        plt.title(f"label lables distribution: ", fontsize=fontsize)
         plt.xticks(fontsize=6)  # Set font size for x-axis tick labels
         plt.savefig(os.path.join(self.data_root, 'Label_distribution.png'))
         
-        print(f"Total #defect images: {len(self.defect_labels)} with {sum(list(self.label_distribution.values()))} lbls.")
+        print(f"Total #label images: {len(self.labeled_imgs)} with {sum(list(self.label_distribution.values()))} lbls.")
         print(f"Total #pass images: {len(self.pass_imgs)}")
         print(f"Total #review images: {len(self.review_imgs)}")
         print(f"Total #remove images: {len(self.remove_imgs)}")
-        print(f"Total #images: {len(self.defect_labels) +len(self.pass_imgs) + len(self.review_imgs) + len(self.remove_imgs) }")
-        print(f"Defect objects distribution in {os.path.join(self.data_root, 'Label_distribution.png')}")
+        print(f"Total #images: {len(self.labeled_imgs) +len(self.pass_imgs) + len(self.review_imgs) + len(self.remove_imgs) }")
+        print(f"label objects distribution in {os.path.join(self.data_root, 'Label_distribution.png')}")
 
     def _compute_boxes_distribution(self):
         box_area_dist = { cls: [] for cls in self.class_ids.keys()}
         box_ratio_dist = { cls: [] for cls in self.class_ids.keys()}
 
-        for img_path in self.defect_labels.keys():
-            lbls = self.defect_labels[img_path]
+        for img_path in self.labeled_imgs.keys():
+            lbls = self.labeled_imgs[img_path]
             for lbl in lbls:
                 class_lbl = lbl[0]
                 w , h = int(lbl[3] - lbl[1]) , int(lbl[4] - lbl[2])
@@ -125,8 +125,7 @@ class Labelme:
 class LabelmeVisualizer:
     def __init__(self, save_dir: str, box_area_dist: dict, box_ratio_dist: dict):
         self.save_dir = os.path.join(save_dir, 'LabelmeVisualization')
-        if not os.path.isdir(self.save_dir):
-            os.mkdir(self.save_dir)
+        mkdir(self.save_dir)
         self.box_area_dist = box_area_dist
         self.box_ratio_dist = box_ratio_dist
 
@@ -191,12 +190,12 @@ class LabelmeVisualizer:
         plt.tight_layout()
         save_path = os.path.join(save_dir, f'{title.replace(" ", "_")}.png')
         plt.savefig(save_path)
-        print(f"Histogram saved in {save_path}")
-        plt.close()  # Close the plot to free memory
+        #print(f"Histogram saved in {save_path}")
+        plt.close() 
 
     def show_bbox_area_distribution(self, num_bins: int, bin_range: list, xticks_step: float, cls=None):
         """
-        Visualizes the defect bounding box area distribution for all or a specific class.
+        Visualizes the label bounding box area distribution for all or a specific class.
 
         Args:
             num_bins (int): Number of bins.
@@ -220,7 +219,7 @@ class LabelmeVisualizer:
 
     def show_box_ratio_distribution(self, num_bins: int, bin_range: list, xticks_step: float, cls=None):
         """
-        Visualizes the defect bounding box ratio distribution for all or a specific class.
+        Visualizes the label bounding box ratio distribution for all or a specific class.
 
         Args:
             num_bins (int): Number of bins.

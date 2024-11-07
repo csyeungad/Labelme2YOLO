@@ -14,7 +14,7 @@ def annotate_image_idxyxy(image_path, labels):
         dest_path (str): Path to save the annotated image.
     """
     image = cv2.imread(image_path)
-    for label in labels: #[['INCOMPLETE_FILL', 138, 238, 849, 1034],...]
+    for label in labels: #[[CLS_1, x1, y1, x2, y2]...]
         class_name = label[0]
         x1, y1, x2, y2 = map(int, label[1:])
         w, h = x2 - x1, y2-y1
@@ -29,13 +29,13 @@ def annotate_image_idxyxy(image_path, labels):
         cv2.putText(image, f"{(w / h):.2f}", ratio_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 0), 2)
     return image
 
-def vis_defect_images(dest_path, defect_imgs: dict) -> None:
-    """Draw bounding boxes on defect images, grouping by first occurence of cls"""
+def vis_label_images(dest_path, labeled_imgs: dict) -> None:
+    """Draw bounding boxes on label images, grouping by first occurence of cls"""
     mkdir(dest_path)
-    mkdir(os.path.join(dest_path, "DEFECT")) #"VI-MIS-002_20240601_WPPD21171000_01_328_54_VOID_TOP_INCOMPLETE_FILL.jpg" , [['INCOMPLETE_FILL', 138, 238, 849, 1034]]
-    for defect_img, lbls in defect_imgs.items(): 
+    mkdir(os.path.join(dest_path, "label_VIS")) #"img_name.ext" , [[CLS_1, x1, y1, x2, y2]...]
+    for label_img, lbls in labeled_imgs.items(): 
         main_lbl = lbls[0][0] #TODO: define label priority based on importance
-        mkdir(os.path.join(dest_path, "DEFECT", main_lbl))
-        name = os.path.basename(defect_img)
-        anno_image = annotate_image_idxyxy(image_path = defect_img, labels= lbls)
-        cv2.imwrite(os.path.join(dest_path, "DEFECT", main_lbl, name), anno_image)
+        mkdir(os.path.join(dest_path, "label_VIS", main_lbl))
+        name = os.path.basename(label_img)
+        anno_image = annotate_image_idxyxy(image_path = label_img, labels= lbls)
+        cv2.imwrite(os.path.join(dest_path, "label_VIS", main_lbl, name), anno_image)

@@ -5,7 +5,7 @@ import cv2
 import yaml
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.utils import load_class_ids
+from utils.utils import load_class_ids, mkdir
 
 """Struture
 root
@@ -37,19 +37,20 @@ class Labelme2YOLO():
         """
         Args:
             data_root (str): root for the dataset
-            labelme_lbls (dict): defect_lbls extracted from labelme format
+            labelme_lbls (dict): labels extracted from labelme format
             imgs_shape_wh (dict): image w h
             pass_imgs (list): _description_
             split_ratio (list): train/val/test ratios
             class_ids (dict): class_id for each class
         """
         self.data_root = data_root
-        self.save_dir = os.path.join(data_root, 'yolo_dataset')
+        self.save_dir = os.path.join(data_root + '_yolo_dataset')
+        mkdir(self.save_dir)
         self.labelme_lbls: dict = labelme_lbls
         '''
         labelme_lbls = {
-            defect_img_path_1: [[label, xmin, ymin, xmax, ymax],...]
-            defect_img_path_2: [[label, xmin, ymin, xmax, ymax],...]
+            label_img_path_1: [[label, xmin, ymin, xmax, ymax],...]
+            label_img_path_2: [[label, xmin, ymin, xmax, ymax],...]
         }
         '''
         self.pass_imgs: list = pass_imgs
@@ -60,8 +61,8 @@ class Labelme2YOLO():
         self.yolo_lbls = {} 
         '''
         yolo_lbls = {
-            defect_img_path_1: [[cls_id, xc, yc, w, h],...]
-            defect_img_path_2: [[cls_id, xc, yc, w, h],...]
+            label_img_path_1: [[cls_id, xc, yc, w, h],...]
+            label_img_path_2: [[cls_id, xc, yc, w, h],...]
         } 
         '''
         self._convert_lbls()
@@ -69,7 +70,7 @@ class Labelme2YOLO():
         '''
         split_data = {
             train: {
-                defect_img_path_1 : [[cls_id, xc, yc, w, h],...]
+                label_img_path_1 : [[cls_id, xc, yc, w, h],...]
             },
             val: {
             }
@@ -107,7 +108,6 @@ class Labelme2YOLO():
             yolo_lbls[img_path] = [self.__convert_xyxy_to_normalised_xywh(lbl, img_w, img_h) for lbl in lbls]
             
         self.yolo_lbls = yolo_lbls
-        print(f"[convert_lbls]: Successfully converted into yolo labels...")
 
     def _split_train_val_test(self, random_seed:int = 0) -> list:
         random.seed(random_seed)
@@ -225,8 +225,8 @@ class Labelme2YOLO():
 
         # Add labels and title
         plt.ylabel('# Labels', fontsize=fontsize)
-        plt.xlabel('Defect Class', fontsize=fontsize)
-        plt.title('Defect Labels Distribution', fontsize=fontsize)
+        plt.xlabel('l=Label Class', fontsize=fontsize)
+        plt.title('Label Labels Distribution', fontsize=fontsize)
         plt.xticks(x + width, list(self.class_ids), fontsize=6)  # Set x-ticks to the center of the grouped bars
         plt.legend()  # Add a legend for the set types
 
@@ -238,8 +238,7 @@ class Labelme2YOLO():
         for set_type in ['train', 'val', 'test']:
             set_dist = split_data_distribution[set_type]
             print(f"Total #{set_type} images: {len(self.split_data[set_type])} with {sum(set_dist.values())} labels.")
-        print(f"Defect objects distribution saved in {os.path.join(self.save_dir, 'Label_distribution_combined.png')}")
-        print("---------------------------------------------------")
+        print(f"Label objects distribution saved in {os.path.join(self.save_dir, 'Label_distribution_combined.png')}")
 
     def __convert_normalised_xywh_to_xyxy(self, lbl, img_w, img_h):
         cls = self.id_mapping[lbl[0]]
@@ -283,26 +282,6 @@ class Labelme2YOLO():
                 # Convert BGR to RGB for plotting
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 cv2.imwrite(os.path.join(save_path, os.path.basename(img_path)),img_rgb)
-
-class YOLOVisualizer:
-    def __init__(self, data_root):
-        #data_root
-            #images
-                #dir_1
-                #dir_2
-                #dir_3
-            
-        pass
-
-class YOLODataset:
-    def __init__(self, ):
-        pass
-
-    def _load_anno():
-        pass
-
-    def _split_dataset():
-        pass
 
 
 
