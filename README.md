@@ -19,7 +19,8 @@ cfg.json
     {
         "labeled_data_root" : directory with data labeled with Labelme 
         "output_dir" : directory for data grouping of differents flags, labeled data, labeled data visualization and distributions
-        "split_ratio" : ratio of train\val\test test e.g. [0.7, 0.15,0.15] 
+        "split_ratio" : ratio of train\val\test test e.g. [0.7, 0.15,0.15]
+        "single_cls_name" : the name of combined classes, default None to retain all multiple classes
     }
 
 ## Output dataset converted
