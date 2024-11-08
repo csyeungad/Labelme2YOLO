@@ -33,18 +33,21 @@ class Labelme2YOLO():
     2. Split train/val/test data
     3. Visualization labeled data
     """
-    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list):
+    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list, single_cls_name: str = None):
         """
         Args:
-            data_root (str): root for the dataset
+            data_root (str): root of the dataset where
             labelme_lbls (dict): labels extracted from labelme format
             imgs_shape_wh (dict): image w h
-            pass_imgs (list): _description_
+            pass_imgs (list): image with pass as flag from labelme format
             split_ratio (list): train/val/test ratios
             class_ids (dict): class_id for each class
+            single_cls_name (str): the name of combined classes, default None to retain all multiple classes
         """
         self.data_root = data_root
         self.save_dir = os.path.join(data_root + '_yolo_dataset')
+        if single_cls_name:
+            self.save_dir = os.path.join(data_root + '_yolo_dataset_single_cls')
         mkdir(self.save_dir)
         self.labelme_lbls: dict = labelme_lbls
         '''
@@ -54,7 +57,16 @@ class Labelme2YOLO():
         }
         '''
         self.pass_imgs: list = pass_imgs
-        self.class_ids : dict[str, int] = load_class_ids(os.path.join(self.data_root, f'lbls_class_ids_{os.path.basename(self.data_root)}.json'))
+        self.class_ids = dict[str, int]
+        self.single_cls_name : bool = single_cls_name
+        if single_cls_name:
+            self.class_ids = {f"{self.single_cls_name}": 0}
+        else:
+            class_ids_json = os.path.join(self.data_root, f'lbls_class_ids_{os.path.basename(self.data_root)}.json')
+            if not os.path.exists(class_ids_json):
+                raise f"lbls_class_ids_{os.path.basename(self.data_root)}.json does not exist!"
+            self.class_ids : dict[str, int] = load_class_ids(class_ids_json)
+
         self.id_mapping = { id: cls for cls, id in self.class_ids.items()}
         self.split_ratio : list = split_ratio
         self.imgs_shape_wh: dict = imgs_shape_wh #k: img_path v: w,h
@@ -96,6 +108,9 @@ class Labelme2YOLO():
         w = (x_max - x_min) / img_w  # Normalize to [0, 1]
         h = (y_max - y_min) / img_h  # Normalize to [0, 1]
 
+        if self.single_cls_name:
+            return [ int(0), xc, yc, w, h]
+        
         return [self.class_ids[cls], xc, yc, w, h]
 
     def _convert_lbls(self):
