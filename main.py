@@ -50,7 +50,8 @@ if __name__ == "__main__":
         labelme_lbls = labelme_data.labeled_imgs,
         imgs_shape_wh= labelme_data.imgs_shape_wh,
         pass_imgs= labelme_data.pass_imgs,
-        split_ratio= cfg['split_ratio']
+        split_ratio= cfg['split_ratio'],
+        single_cls_name= cfg['single_cls_name']
     )
 
     
