@@ -51,7 +51,8 @@ if __name__ == "__main__":
         imgs_shape_wh= labelme_data.imgs_shape_wh,
         pass_imgs= labelme_data.pass_imgs,
         split_ratio= cfg['split_ratio'],
-        single_cls_name= cfg['single_cls_name']
+        single_cls_name= cfg['single_cls_name'],
+        include_pass_imgs= cfg['include_pass_imgs']
     )
 
     

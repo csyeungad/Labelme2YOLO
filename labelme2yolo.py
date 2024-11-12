@@ -6,6 +6,7 @@ import yaml
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.utils import load_class_ids, mkdir
+from tqdm import tqdm
 
 """Struture
 root
@@ -33,7 +34,7 @@ class Labelme2YOLO():
     2. Split train/val/test data
     3. Visualization labeled data
     """
-    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list, single_cls_name: str = None):
+    def __init__(self, data_root: str, labelme_lbls: dict, imgs_shape_wh: dict, pass_imgs: list, split_ratio: list, single_cls_name: str = None, include_pass_imgs: bool = False):
         """
         Args:
             data_root (str): root of the dataset where
@@ -47,7 +48,10 @@ class Labelme2YOLO():
         self.data_root = data_root
         self.save_dir = os.path.join(data_root + '_yolo_dataset')
         if single_cls_name:
-            self.save_dir = os.path.join(data_root + '_yolo_dataset_single_cls')
+            self.save_dir = self.save_dir + f'_single_cls_{single_cls_name}'
+        self.include_pass_imgs : bool = include_pass_imgs
+        if include_pass_imgs:
+            self.save_dir = self.save_dir + '_include_pass'
         mkdir(self.save_dir)
         self.labelme_lbls: dict = labelme_lbls
         '''
@@ -78,6 +82,9 @@ class Labelme2YOLO():
         } 
         '''
         self._convert_lbls()
+        if include_pass_imgs:
+            print(f"Include_pass_img: add {len(self.pass_imgs)} pass imgs")
+            self.yolo_lbls.update({ img_path: [] for img_path in self.pass_imgs})
         self.split_data: dict = {}
         '''
         split_data = {
@@ -116,10 +123,8 @@ class Labelme2YOLO():
     def _convert_lbls(self):
         """ Convert Labelme lbl format to YOLO lbl format """
         yolo_lbls = {}
-        for img_path, lbls in self.labelme_lbls.items():
+        for img_path, lbls in tqdm(self.labelme_lbls.items(), desc= 'Converting labels to YOLO format'):
             img_w, img_h = self.imgs_shape_wh[img_path]
-            if len(lbls) == 0:
-                print(f"{img_path}")
             yolo_lbls[img_path] = [self.__convert_xyxy_to_normalised_xywh(lbl, img_w, img_h) for lbl in lbls]
             
         self.yolo_lbls = yolo_lbls
@@ -131,7 +136,7 @@ class Labelme2YOLO():
         img_path_list = list(self.yolo_lbls.keys())
         random.shuffle(img_path_list)
 
-        sizes = [int(len(img_path_list) * (ratio / sum(ratios))) for ratio in ratios]
+        sizes = [int(len(img_path_list) * (ratio / sum(ratios))) for ratio in ratios] #convert ratio to number of images for each set
         sizes[-1] += len(img_path_list) - sum(sizes)
         
         # Slice the data into parts
@@ -144,9 +149,6 @@ class Labelme2YOLO():
             start = end
         
         self.split_data = split_data
-        print(f"[split_train_val_test]: Successfully split data into: ")
-        for set_type, data in self.split_data.items():
-            print(f"{set_type}: {len(data)}")
 
     def _generate_dataset(self):
         """ Generate dataset for train/val/test """
@@ -160,7 +162,7 @@ class Labelme2YOLO():
             os.makedirs(save_img_dir, exist_ok=True)
             os.makedirs(save_lbl_dir, exist_ok=True)
 
-            for img_path, lbls in data.items():
+            for img_path, lbls in tqdm(data.items(), desc = f'[Generate_dataset] ({set_type})'):
                 try:
                     txt_path = os.path.join(save_lbl_dir, os.path.basename(img_path).replace(".jpg", '.txt'))
                     with open(txt_path, 'w', newline= '\n') as f:
@@ -171,7 +173,7 @@ class Labelme2YOLO():
                 except Exception as e:
                     print(e)
 
-        print(f"[Generate_dataset]: Successfully generated dataset in path:\n {save_dir}")
+        print(f"[Generate_dataset]: Successfully generated dataset in path: {save_dir}")
 
     def _generate_yaml(self):
         """ Save dataset yaml required in YOLO training """
@@ -198,14 +200,13 @@ class Labelme2YOLO():
         # Write the distribution to a YAML file
         with open(save_path, 'w') as file:
             yaml.dump(content, file)
-        print(f"[Generate_yaml]: Successfully generated yaml in path:\n {save_path}")
+        print(f"[Generate_yaml]: Successfully generated yaml in path: {save_path}")
 
     def _get_cls_distribution(self) -> dict:
         from collections import Counter
         split_data_distribution = {}
         for set_type, data in self.split_data.items():
-            # Use Counter to count occurrences of class labels
-            _distribution = Counter(lbl[0] for lbls in data.values() for lbl in lbls)
+            _distribution = Counter(lbl[0] for lbls in data.values() for lbl in lbls ) + Counter('PASS'  for lbls in data.values() if len(lbls) == 0)
             split_data_distribution[set_type] = dict(_distribution)
         return split_data_distribution
         
@@ -238,21 +239,23 @@ class Labelme2YOLO():
             for j, height in enumerate(heights):
                 plt.text(x[j] + i * width, height, height, ha='center', va='bottom', fontsize=fontsize)
 
+        for i, set_type in enumerate(['train', 'val', 'test']):
+            set_dist = split_data_distribution[set_type]
+            lbls_count = sum([ v for k,v in set_dist.items() if k != 'PASS' ])
+            print(f"\tTotal #{set_type} images: {len(self.split_data[set_type])} with {lbls_count} labels.")
+            plt.text(0.7, 1.09 - i*0.03, f"Total #{set_type} images: {len(self.split_data[set_type])} with {lbls_count} labels.", 
+                ha='left', va='baseline', fontsize=fontsize, transform=plt.gca().transAxes)
+            
         # Add labels and title
         plt.ylabel('# Labels', fontsize=fontsize)
-        plt.xlabel('l=Label Class', fontsize=fontsize)
+        plt.xlabel('Label Class', fontsize=fontsize)
         plt.title('Label Labels Distribution', fontsize=fontsize)
         plt.xticks(x + width, list(self.class_ids), fontsize=6)  # Set x-ticks to the center of the grouped bars
         plt.legend()  # Add a legend for the set types
 
-        # Save the combined plot
         plt.tight_layout()
         plt.savefig(os.path.join(self.save_dir, 'Label_distribution_combined.png'))
 
-        # Print summary information
-        for set_type in ['train', 'val', 'test']:
-            set_dist = split_data_distribution[set_type]
-            print(f"Total #{set_type} images: {len(self.split_data[set_type])} with {sum(set_dist.values())} labels.")
         print(f"Label objects distribution saved in {os.path.join(self.save_dir, 'Label_distribution_combined.png')}")
 
     def __convert_normalised_xywh_to_xyxy(self, lbl, img_w, img_h):
@@ -286,7 +289,10 @@ class Labelme2YOLO():
             save_path = os.path.join(self.save_dir, 'vis', set_type)
             os.makedirs(save_path, exist_ok=True)
 
-            for img_path, lbls in data.items():
+            for img_path, lbls in tqdm(data.items(), desc= f'Visualizing {set_type} image:'):
+                if len(lbls) == 0:
+                    shutil.copy2(img_path, os.path.join(save_path, os.path.basename(img_path)))
+                    continue
                 img = cv2.imread(img_path)
                 lbls = self.yolo_lbls[img_path]
                 img_h, img_w, _ = img.shape  # (H,W,D)

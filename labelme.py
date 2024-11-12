@@ -3,6 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.utils import SUPPORT_FORMAT, save_class_ids, mkdir
+from tqdm import tqdm
 
 class Labelme:
     """Load annotated data in labelme format. label distribution saves to data root"""
@@ -36,7 +37,7 @@ class Labelme:
         
         """
         class_list = set()
-        for cur_root, dirs, files in os.walk(self.data_root):
+        for cur_root, dirs, files in tqdm(os.walk(self.data_root), desc= "Loading detection annotation"):
             for file in files:
                 if file.endswith(SUPPORT_FORMAT):
                     file_path = os.path.join(cur_root, file)
@@ -95,18 +96,29 @@ class Labelme:
             plt.text(bar.get_x() + bar.get_width()/2, yval, yval, 
                     ha='center', va='bottom', fontsize=fontsize)
 
+        # Annotations using print statements
+        total_labels = sum(self.label_distribution.values())
+        plt.text(0.7, 1.12, f"Total #label images: {len(self.labeled_imgs)} with {total_labels} lbls.", 
+                 ha='left', va='baseline', fontsize=fontsize, transform=plt.gca().transAxes)
+        plt.text(0.7, 1.09, f"Total #pass images: {len(self.pass_imgs)}", 
+                 ha='left', va='baseline', fontsize=fontsize, transform=plt.gca().transAxes)
+        plt.text(0.7, 1.06, f"Total #review images: {len(self.review_imgs)}", 
+                 ha='left', va='baseline', fontsize=fontsize, transform=plt.gca().transAxes)
+        plt.text(0.7, 1.00, f"Total #images: {len(self.labeled_imgs) + len(self.pass_imgs) + len(self.review_imgs) + len(self.remove_imgs)}", 
+                 ha='left', va='baseline', fontsize=fontsize, transform=plt.gca().transAxes)
+
         plt.ylabel('#labels', fontsize=fontsize)
         plt.xlabel('Label class', fontsize=fontsize)
         plt.title(f"Label distribution: ", fontsize=fontsize)
         plt.xticks(fontsize=6)  # Set font size for x-axis tick labels
         plt.savefig(os.path.join(self.data_root, 'Label_distribution.png'))
-        
-        print(f"Total #label images: {len(self.labeled_imgs)} with {sum(list(self.label_distribution.values()))} lbls.")
-        print(f"Total #pass images: {len(self.pass_imgs)}")
-        print(f"Total #review images: {len(self.review_imgs)}")
-        print(f"Total #remove images: {len(self.remove_imgs)}")
-        print(f"Total #images: {len(self.labeled_imgs) +len(self.pass_imgs) + len(self.review_imgs) + len(self.remove_imgs) }")
-        print(f"label objects distribution in {os.path.join(self.data_root, 'Label_distribution.png')}")
+
+        print(f"\tTotal #label images: {len(self.labeled_imgs)} with {sum(list(self.label_distribution.values()))} lbls.")
+        print(f"\tTotal #pass images: {len(self.pass_imgs)}")
+        print(f"\tTotal #review images: {len(self.review_imgs)}")
+        print(f"\tTotal #remove images: {len(self.remove_imgs)}")
+        print(f"\tTotal #images: {len(self.labeled_imgs) +len(self.pass_imgs) + len(self.review_imgs) + len(self.remove_imgs) }")
+        print(f"\tLabel objects distribution in {os.path.join(self.data_root, 'Label_distribution.png')}")
 
     def _compute_boxes_distribution(self):
         box_area_dist = { cls: [] for cls in self.class_ids.keys()}

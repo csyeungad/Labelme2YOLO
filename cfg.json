@@ -2,5 +2,6 @@
     "labeled_data_root" : "",
     "output_dir" : "",
     "split_ratio" : [0.7, 0.15,0.15],
-    "single_cls_name" : null
+    "single_cls_name" : null,
+    "include_pass_imgs": false
 }
