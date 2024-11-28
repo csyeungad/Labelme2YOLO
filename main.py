@@ -9,9 +9,8 @@ if __name__ == "__main__":
     print(cfg)
     
     #Load annotation in the data root, save class_ids pair & data distribution
-    #TODO: support loading data in any folder structure, now only support single layer
     labelme_data = Labelme(data_root= cfg['labeled_data_root'])
-
+    
     #Group label / pass / remove / review images 
     utils.group_images(
         dest_path= cfg['output_dir'],
@@ -40,10 +39,9 @@ if __name__ == "__main__":
     for cls in labelme_data.class_ids.keys():
         visualizer.show_bbox_area_distribution(num_bins= 100, bin_range= [0,1500], xticks_step= 100, cls = cls)
         visualizer.show_box_ratio_distribution(num_bins= 100, bin_range= [0,10], xticks_step= 0.5, cls = cls)
-
+    
     #Label Conversion to YOLO data labeling format, split dataset into train/val/test, visulize the labeled data
     #TODO: support evenly splitting different label classes to train/val/test
-    #TODO: support include splitting pass data into train/val/test
     #TODO: support conversion to YOLO classification model format
     conversion = Labelme2YOLO(
         data_root = cfg['labeled_data_root'],

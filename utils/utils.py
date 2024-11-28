@@ -85,3 +85,20 @@ def group_images(dest_path, pass_imgs: list, review_imgs: list, labeled_imgs: di
             shutil.copy2(json_path, os.path.join(dest_path, "REMOVE",json_name))
         except Exception as e:
             print(e)
+
+def create_empty_txt_files(path):
+    """ To create empty .txt files for all images in a folder """
+    txt_save_dir = os.path.join(path, "labels")
+    mkdir(txt_save_dir)
+    for cur_dir, dirs, files in os.walk(path):
+        for file in files:
+            if file.endswith(SUPPORT_FORMAT):
+                txt_path = os.path.join(txt_save_dir, os.path.splitext(file)[0] + '.txt')
+                with open(txt_path, 'w', newline= '\n') as f:
+                    pass
+
+    print(f"Created empty .txt files in {txt_save_dir}")               
+            
+if __name__ == "__main__":
+
+    create_empty_txt_files(r".\path\imgs")

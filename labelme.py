@@ -181,29 +181,32 @@ class LabelmeVisualizer:
             title (str): Title of the plot.
             xticks_step (float): Step size for x-ticks.
         """
-        plt.figure(figsize=(12, 6))
-        counts, _, patches = plt.hist(data, bins=bin_edges, edgecolor='black', alpha=0.7)
-        plt.xlabel(xlabel)
+        try:
+            plt.figure(figsize=(12, 6))
+            counts, _, patches = plt.hist(data, bins=bin_edges, edgecolor='black', alpha=0.7)
+            plt.xlabel(xlabel)
 
-        if xticks_step:
-            plt.xticks(np.arange(min(bin_edges), max(bin_edges) + 1, xticks_step))
-        
-        plt.ylabel('Count')
-        plt.title(title)
-        plt.grid(axis='y')
+            if xticks_step:
+                plt.xticks(np.arange(min(bin_edges), max(bin_edges) + 1, xticks_step))
+            
+            plt.ylabel('Count')
+            plt.title(title)
+            plt.grid(axis='y')
 
-        # Annotate counts on the histogram bars
-        for count, patch in zip(counts, patches):
-            if count > 0:  # Only annotate if count is greater than zero
-                height = patch.get_height()
-                plt.text(patch.get_x() + patch.get_width() / 2, height, int(count), 
-                         ha='center', va='bottom', fontsize=10)
+            # Annotate counts on the histogram bars
+            for count, patch in zip(counts, patches):
+                if count > 0:  # Only annotate if count is greater than zero
+                    height = patch.get_height()
+                    plt.text(patch.get_x() + patch.get_width() / 2, height, int(count), 
+                            ha='center', va='bottom', fontsize=10)
 
-        plt.tight_layout()
-        save_path = os.path.join(save_dir, f'{title.replace(" ", "_")}.png')
-        plt.savefig(save_path)
-        #print(f"Histogram saved in {save_path}")
-        plt.close() 
+            plt.tight_layout()
+            save_path = os.path.join(save_dir, f'{title.replace(" ", "_")}.png')
+            plt.savefig(save_path)
+            #print(f"Histogram saved in {save_path}")
+            plt.close()
+        except Exception as e:
+            print(e)
 
     def show_bbox_area_distribution(self, num_bins: int, bin_range: list, xticks_step: float, cls=None):
         """
