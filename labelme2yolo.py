@@ -164,7 +164,7 @@ class Labelme2YOLO():
 
             for img_path, lbls in tqdm(data.items(), desc = f'[Generate_dataset] ({set_type})'):
                 try:
-                    txt_path = os.path.join(save_lbl_dir, os.path.basename(img_path).replace(".jpg", '.txt'))
+                    txt_path = os.path.join(save_lbl_dir, os.path.splitext(os.path.basename(img_path))[0] + '.txt')
                     with open(txt_path, 'w', newline= '\n') as f:
                         for lbl in lbls:
                             formatted_data = [str(lbl[0])] + [f"{x:.6g}" for x in lbl[1:]]

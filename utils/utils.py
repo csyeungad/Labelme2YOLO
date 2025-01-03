@@ -42,8 +42,9 @@ def group_images(dest_path, pass_imgs: list, review_imgs: list, labeled_imgs: di
     mkdir(os.path.join(dest_path, "PASS")) #"img_name.ext"
     for pass_img in pass_imgs: 
         name = os.path.basename(pass_img)
-        json_path = pass_img.replace(".jpg", ".json")
-        json_name = name.replace(".jpg", ".json")
+        ext = os.path.splitext(name)[1]
+        json_path = pass_img.replace(ext, ".json")
+        json_name = name.replace(ext, ".json")
         try:
             shutil.copy2(pass_img, os.path.join(dest_path, "PASS", name))
             shutil.copy2(json_path, os.path.join(dest_path, "PASS",json_name))
@@ -53,8 +54,9 @@ def group_images(dest_path, pass_imgs: list, review_imgs: list, labeled_imgs: di
     mkdir(os.path.join(dest_path, "REVIEW")) #"img_name.ext"
     for review_img in review_imgs:
         name = os.path.basename(review_img)
-        json_path = review_img.replace(".jpg", ".json")
-        json_name = name.replace(".jpg", ".json")
+        ext = os.path.splitext(name)[1]
+        json_path = review_img.replace(ext, ".json")
+        json_name = name.replace(ext, ".json")
         try:
             shutil.copy2(review_img, os.path.join(dest_path, "REVIEW", name))
             shutil.copy2(json_path, os.path.join(dest_path, "REVIEW",json_name))
@@ -67,8 +69,9 @@ def group_images(dest_path, pass_imgs: list, review_imgs: list, labeled_imgs: di
         main_lbl = lbls[0][0]
         mkdir(os.path.join(dest_path, "label", main_lbl))
         name = os.path.basename(label_img)
-        json_path = label_img.replace(".jpg", ".json")
-        json_name = name.replace(".jpg", ".json")
+        ext = os.path.splitext(name)[1]
+        json_path = label_img.replace(ext, ".json")
+        json_name = name.replace(ext, ".json")
         try:
             shutil.copy2(label_img, os.path.join(dest_path, "label", main_lbl, name))
             shutil.copy2(json_path, os.path.join(dest_path, "label",main_lbl ,json_name))
@@ -78,8 +81,9 @@ def group_images(dest_path, pass_imgs: list, review_imgs: list, labeled_imgs: di
     mkdir(os.path.join(dest_path, "REMOVE")) #"img_name.ext"
     for remove_img in remove_imgs:
         name = os.path.basename(remove_img)
-        json_path = remove_img.replace(".jpg", ".json")
-        json_name = name.replace(".jpg", ".json")
+        ext = os.path.splitext(name)[1]
+        json_path = remove_img.replace(ext, ".json")
+        json_name = name.replace(ext, ".json")
         try:
             shutil.copy2(remove_img, os.path.join(dest_path, "REMOVE", name))
             shutil.copy2(json_path, os.path.join(dest_path, "REMOVE",json_name))
