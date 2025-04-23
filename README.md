@@ -1,6 +1,13 @@
 # Labelme2YOLO
 
-**Labelme2YOLO** is a convenient tool designed to convert datasets annotated with [Labelme](https://github.com/wkentaro/labelme) into the YOLO format, streamlining the dataset preparation process for YOLO model training.  
+**Labelme2YOLO** is a convenient tool designed to convert datasets annotated with [Labelme](https://github.com/wkentaro/labelme) into the YOLO format, streamlining the dataset preparation process for YOLO model training. 
+
+In addition to format conversion, it offers:
+
+- Grouping of raw images and Labelme JSON annotations by predefined flags.
+- Visualization of label aspect ratios and object sizes for comprehensive exploratory data analysis. 
+
+This helps users better understand their dataset distribution and quality before training YOLO models.
 
 ## Why use Labelme2YOLO?
 
@@ -51,12 +58,12 @@ Configure your dataset and conversion settings in the `cfg.json` file:
 - `single_cls_name`: (Optional) If set, merges all classes into a single class with this name.
 - `include_pass_img`: Whether to include images flagged as "PASS" in the dataset (default `false`).
 
-## Output Dataset Structure
+## Output YOLO Dataset Structure
 
-After conversion, your dataset will be organized in YOLO format under `<output_dir>` (e.g., `labeled_data_root_yolo_dataset`):
+After conversion, your dataset will be organized in YOLO format under `<output_dir>_yolo_dataset`:
 
 ```
-labeled_data_root_yolo_dataset/
+<output_dir>_yolo_dataset/
 ├── images/
 │   ├── train/
 │   │   ├── img_1.jpg
@@ -85,6 +92,41 @@ labeled_data_root_yolo_dataset/
 - `dataset.yaml` is a dataset configuration file compatible with YOLO training frameworks.
 - `Label_distribution_combined.png` shows the class distribution across your dataset splits.
 
+![image](https://github.com/user-attachments/assets/583c6ba4-d4a2-41c2-bc02-740bbcbeaa3c)
+
+## Output Dataset Analysis Structure
+
+Apart from the converted dataset, the image grouping for different classes and flags will be saved under `<output_dir>` for analysis:
+
+```
+<output_dir>/
+├── label/
+│   ├── CLS_1/
+│   │   ├── img_1.jpg
+│   │   ├── img_2.jpg
+│   ├── CLS_2/
+│   └── CLS_3/
+├── label_VIS/
+│   ├── CLS_1/
+│   │   ├── img_1.jpg
+│   │   ├── img_2.jpg
+│   ├── CLS_2/
+│   └── CLS_3/
+├── LabelmeVisualizer/
+│   ├── Distribution_of_Bbox_Ratio_CLS_*
+│   └── Distribution_of_Bbox_sqrt(Area)_CLS_*
+├── PASS/
+├── REVIEW/
+└── REMOVE/
+```
+
+- `label/` contains the raw images and Labelme JSON annotation files grouped by different classes.
+- `label_VIS/` contains images with visualized annotations grouped by different classes.
+- `LabelmeVisualizer/` contains plots showing the distribution of bounding box aspect ratios and object sizes (square root of bounding box area), useful for dataset exploratory analysis.
+- `PASS/`, `REVIEW/`, and `REMOVE/` directories contain raw images and Labelme JSON files grouped according to their annotation flags for easy review and filtering.
+
+![image](https://github.com/user-attachments/assets/aba3d489-7fff-4b9c-bdd5-d8fe500e1843)
+![image](https://github.com/user-attachments/assets/248d9ea6-b603-4737-b974-6a8c5c1a040b)
 
 ## Recommended Next Steps for Model Training
 
